@@ -20,7 +20,7 @@
         "doc": "The actual message"
     }, {
         "name": "type",
-        "type": "string",
+        "type":"string",
         "doc": "The type of message"
     }],
     "doc": "A basic schema for storing Stashy messages"
