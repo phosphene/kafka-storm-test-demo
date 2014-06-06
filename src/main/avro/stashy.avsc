@@ -2,7 +2,7 @@
     "type":"record",
     "name": "Stashy",
     "namespace": "com.phosphene.avro",
-    "fields": [{
+    "fields": [ {
         "name":	"message",
         "type":"string",
         "doc": "The actual message"
