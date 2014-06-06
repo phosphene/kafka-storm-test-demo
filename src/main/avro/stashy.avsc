@@ -1,0 +1,27 @@
+{
+    "type":"record",
+    "name": "Stashy",
+    "namespace": "com.phosphene.avro",
+    "fields": [ {
+        "name":	"timestamp",
+        "type":"long",
+        "doc": "Timestamp"
+    }, {
+        "name":	"version",
+        "type":"string",
+        "doc": "Version"
+    }, {
+        "name":	"host",
+        "type":"string",
+        "doc": "hostname or hostip"
+    },{
+        "name":	"message",
+        "type":"string",
+        "doc": "The actual message"
+    }, {
+        "name": "type",
+        "type": "string",
+        "doc": "The type of message"
+    }],
+    "doc": "A basic schema for storing Stashy messages"
+}
