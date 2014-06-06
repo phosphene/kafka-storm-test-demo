@@ -2,7 +2,7 @@ package com.phosphene.kafkastorm.integration
 
 import _root_.kafka.message.MessageAndMetadata
 import _root_.kafka.utils.{Logging, ZKStringSerializer}
-import com.phosphene.avro.Tweet
+import com.phosphene.avro.Stashy
 import com.phosphene.kafkastorm.kafka.{KafkaProducerApp, ConsumerTaskContext, KafkaConsumer, KafkaEmbedded}
 import com.phosphene.kafkastorm.zookeeper.ZooKeeperEmbedded
 import com.twitter.bijection.Injection
@@ -27,7 +27,7 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
   private var zkClient: Option[ZkClient] = None
   private var kafkaEmbedded: Option[KafkaEmbedded] = None
 
-  implicit val specificAvroBinaryInjectionForTweet = SpecificAvroCodecs.toBinary[Tweet]
+  implicit val specificAvroBinaryInjectionForStashy = SpecificAvroCodecs.toBinary[Stashy]
 
   override def beforeAll() {
     // Start embedded ZooKeeper server
@@ -77,26 +77,25 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
     val now = System.currentTimeMillis().millis
 
     new {
-      val t1 = new Tweet("ANY_USER_1", "ANY_TEXT_1", now.toSeconds)
-      val t2 = new Tweet("ANY_USER_2", "ANY_TEXT_2", BeginningOfEpoch.toSeconds)
-      val t3 = new Tweet("ANY_USER_3", "ANY_TEXT_3", AnyTimestamp.toSeconds)
-
+      val t1 = new Stashy("ANY_message_1", "ANY_version_1",now.toSeconds, "ANYstring", "ANYstring")
+      val t2 = new Stashy("ANY_message_2", "ANY_version_2",BeginningOfEpoch.toSeconds, "ANYstring", "ANYstring")
+      val t3 = new Stashy("ANY_message_3", "ANY_version_3",AnyTimestamp.toSeconds, "ANYstring", "ANYstring")
       val messages = Seq(t1, t2, t3)
     }
   }
 
   describe("Kafka") {
 
-    it("should synchronously send and receive a Tweet in Avro format", IntegrationTest) {
+    it("should synchronously send and receive a Stashy in Avro format", IntegrationTest) {
       for {
         z <- zookeeperEmbedded
         k <- kafkaEmbedded
       } {
         Given("a ZooKeeper instance")
         And("a Kafka broker instance")
-        And("some tweets")
+        And("some stashys")
         val f = fixture
-        val tweets = f.messages
+        val stashys = f.messages
         And("a single-threaded Kafka consumer group")
         // The Kafka consumer group must be running before the first messages are being sent to the topic.
         val numConsumerThreads = 1
@@ -106,13 +105,13 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
           c
         }
         val consumer = new KafkaConsumer(testTopic, z.connectString, numConsumerThreads, consumerConfig)
-        val actualTweets = new mutable.SynchronizedQueue[Tweet]
+        val actualStashys = new mutable.SynchronizedQueue[Stashy]
         consumer.startConsumers(
           (m: MessageAndMetadata[Array[Byte], Array[Byte]], c: ConsumerTaskContext) => {
-            val tweet = Injection.invert[Tweet, Array[Byte]](m.message)
-            for {t <- tweet} {
-              info(s"Consumer thread ${c.threadId}: received Tweet ${t} from partition ${m.partition} of topic ${m.topic} (offset: ${m.offset})")
-              actualTweets += t
+            val stashy = Injection.invert[Stashy, Array[Byte]](m.message)
+            for {t <- stashy} {
+              info(s"Consumer thread ${c.threadId}: received Stashy ${t} from partition ${m.partition} of topic ${m.topic} (offset: ${m.offset})")
+              actualStashys += t
             }
           })
         val waitForConsumerStartup = 300.millis
@@ -120,7 +119,7 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
         Thread.sleep(waitForConsumerStartup.toMillis)
         debug("Finished waiting for Kafka consumer threads to launch")
 
-        When("I start a synchronous Kafka producer that sends the tweets in Avro binary format")
+        When("I start a synchronous Kafka producer that sends the stashys in Avro binary format")
         val syncProducerConfig = {
           val c = new Properties
           c.put("producer.type", "sync")
@@ -129,20 +128,20 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
           c
         }
         val producerApp = new KafkaProducerApp(testTopic, k.brokerList, syncProducerConfig)
-        tweets foreach {
-          case tweet => {
-            val bytes = Injection[Tweet, Array[Byte]](tweet)
-            info(s"Synchronously sending Tweet $tweet to topic ${producerApp.topic}")
+        stashys foreach {
+          case stashy => {
+            val bytes = Injection[Stashy, Array[Byte]](stashy)
+            info(s"Synchronously sending Stashy $stashy to topic ${producerApp.topic}")
             producerApp.send(bytes)
           }
         }
 
-        Then("the consumer app should receive the tweets")
+        Then("the consumer app should receive the stashys")
         val waitForConsumerToReadStormOutput = 300.millis
         debug(s"Waiting $waitForConsumerToReadStormOutput ms for Kafka consumer threads to read messages")
         Thread.sleep(waitForConsumerToReadStormOutput.toMillis)
         debug("Finished waiting for Kafka consumer threads to read messages")
-        actualTweets.toSeq should be(f.messages.toSeq)
+        actualStashys.toSeq should be(f.messages.toSeq)
 
         // Cleanup
         debug("Shutting down Kafka consumer threads")
@@ -152,16 +151,16 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
       }
     }
 
-    it("should asynchronously send and receive a Tweet in Avro format", IntegrationTest) {
+    it("should asynchronously send and receive a Stashy in Avro format", IntegrationTest) {
       for {
         z <- zookeeperEmbedded
         k <- kafkaEmbedded
       } {
         Given("a ZooKeeper instance")
         And("a Kafka broker instance")
-        And("some tweets")
+        And("some stashys")
         val f = fixture
-        val tweets = f.messages
+        val stashys = f.messages
         And("a single-threaded Kafka consumer group")
         // The Kafka consumer group must be running before the first messages are being sent to the topic.
         val numConsumerThreads = 1
@@ -171,13 +170,13 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
           c
         }
         val consumer = new KafkaConsumer(testTopic, z.connectString, numConsumerThreads, consumerConfig)
-        val actualTweets = new mutable.SynchronizedQueue[Tweet]
+        val actualStashys = new mutable.SynchronizedQueue[Stashy]
         consumer.startConsumers(
           (m: MessageAndMetadata[Array[Byte], Array[Byte]], c: ConsumerTaskContext) => {
-            val tweet = Injection.invert[Tweet, Array[Byte]](m.message)
-            for {t <- tweet} {
-              info(s"Consumer thread ${c.threadId}: received Tweet ${t} from partition ${m.partition} of topic ${m.topic} (offset: ${m.offset})")
-              actualTweets += t
+            val stashy = Injection.invert[Stashy, Array[Byte]](m.message)
+            for {t <- stashy} {
+              info(s"Consumer thread ${c.threadId}: received Stashy ${t} from partition ${m.partition} of topic ${m.topic} (offset: ${m.offset})")
+              actualStashys += t
             }
           })
         val waitForConsumerStartup = 300.millis
@@ -185,7 +184,7 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
         Thread.sleep(waitForConsumerStartup.toMillis)
         debug("Finished waiting for Kafka consumer threads to launch")
 
-        When("I start an asynchronous Kafka producer that sends the tweets in Avro binary format")
+        When("I start an asynchronous Kafka producer that sends the stashys in Avro binary format")
         val syncProducerConfig = {
           val c = new Properties
           c.put("producer.type", "async")
@@ -193,24 +192,24 @@ class KafkaSpec extends FunSpec with Matchers with BeforeAndAfterAll with GivenW
           c.put("request.required.acks", "1")
           // We must set `batch.num.messages` and/or `queue.buffering.max.ms` so that the async producer will actually
           // send our (typically few) test messages before the unit test finishes.
-          c.put("batch.num.messages", tweets.size.toString)
+          c.put("batch.num.messages", stashys.size.toString)
           c
         }
         val producerApp = new KafkaProducerApp(testTopic, k.brokerList, syncProducerConfig)
-        tweets foreach {
-          case tweet => {
-            val bytes = Injection[Tweet, Array[Byte]](tweet)
-            info(s"Asynchronously sending Tweet $tweet to topic ${producerApp.topic}")
+        stashys foreach {
+          case stashy => {
+            val bytes = Injection[Stashy, Array[Byte]](stashy)
+            info(s"Asynchronously sending Stashy $stashy to topic ${producerApp.topic}")
             producerApp.send(bytes)
           }
         }
 
-        Then("the consumer app should receive the tweets")
+        Then("the consumer app should receive the stashys")
         val waitForConsumerToReadStormOutput = 300.millis
         debug(s"Waiting $waitForConsumerToReadStormOutput ms for Kafka consumer threads to read messages")
         Thread.sleep(waitForConsumerToReadStormOutput.toMillis)
         debug("Finished waiting for Kafka consumer threads to read messages")
-        actualTweets.toSeq should be(f.messages.toSeq)
+        actualStashys.toSeq should be(f.messages.toSeq)
 
         // Cleanup
         debug("Shutting down Kafka consumer threads")

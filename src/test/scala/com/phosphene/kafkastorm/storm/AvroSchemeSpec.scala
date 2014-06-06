@@ -1,6 +1,6 @@
 package com.phosphene.kafkastorm.storm
 
-import com.phosphene.avro.Tweet
+import com.phosphene.avro.Stashy
 import com.twitter.bijection.Injection
 import com.twitter.bijection.avro.SpecificAvroCodecs
 import org.scalatest.{FunSpec, GivenWhenThen, Matchers}
@@ -10,7 +10,7 @@ import scala.language.reflectiveCalls
 
 class AvroSchemeSpec extends FunSpec with Matchers with GivenWhenThen {
 
-  implicit val specificAvroBinaryInjectionForTweet = SpecificAvroCodecs.toBinary[Tweet]
+  implicit val specificAvroBinaryInjectionForStashy = SpecificAvroCodecs.toBinary[Stashy]
 
   val fixture = {
     val BeginningOfEpoch = 0.seconds
@@ -18,10 +18,9 @@ class AvroSchemeSpec extends FunSpec with Matchers with GivenWhenThen {
     val now = System.currentTimeMillis().millis
 
     new {
-      val t1 = new Tweet("ANY_USER_1", "ANY_TEXT_1", now.toSeconds)
-      val t2 = new Tweet("ANY_USER_2", "ANY_TEXT_2", BeginningOfEpoch.toSeconds)
-      val t3 = new Tweet("ANY_USER_3", "ANY_TEXT_3", AnyTimestamp.toSeconds)
-
+      val t1 = new Stashy("ANY_message_1", "ANY_version_1",now.toSeconds, "ANYstring", "ANYstring")
+      val t2 = new Stashy("ANY_message_2", "ANY_version_2",BeginningOfEpoch.toSeconds, "ANYstring", "ANYstring")
+      val t3 = new Stashy("ANY_message_3", "ANY_version_3",AnyTimestamp.toSeconds, "ANYstring", "ANYstring")
       val messages = Seq(t1, t2, t3)
     }
   }
@@ -44,25 +43,25 @@ class AvroSchemeSpec extends FunSpec with Matchers with GivenWhenThen {
 
 
     it("should deserialize binary records of the configured type into pojos") {
-      Given("a scheme for type Tweet ")
-      val scheme = new AvroScheme[Tweet]
-      And("some binary-encoded Tweet records")
+      Given("a scheme for type Stashy ")
+      val scheme = new AvroScheme[Stashy]
+      And("some binary-encoded Stashy records")
       val f = fixture
-      val encodedTweets = f.messages.map(Injection[Tweet, Array[Byte]])
+      val encodedStashys = f.messages.map(Injection[Stashy, Array[Byte]])
 
       When("I deserialize the records into pojos")
-      val actualTweets = for {
-        l <- encodedTweets.map(scheme.deserialize)
+      val actualStashys = for {
+        l <- encodedStashys.map(scheme.deserialize)
         tweet <- l.asScala
       } yield tweet
 
       Then("the pojos should be equal to the original pojos")
-      actualTweets should be(f.messages)
+      actualStashys should be(f.messages)
     }
 
     it("should throw a runtime exception when serialization fails") {
-      Given("a scheme for type Tweet ")
-      val scheme = new AvroScheme[Tweet]
+      Given("a scheme for type Stashy ")
+      val scheme = new AvroScheme[Stashy]
       And("an invalid binary record")
       val invalidBytes = Array[Byte](1, 2, 3, 4)
 
@@ -83,13 +82,13 @@ class AvroSchemeSpec extends FunSpec with Matchers with GivenWhenThen {
     it("should create an AvroScheme for the correct type") {
       Given("a companion object")
 
-      When("I ask it to create a scheme for type Tweet")
-      val scheme = AvroScheme.ofType(classOf[Tweet])
+      When("I ask it to create a scheme for type Stashy")
+      val scheme = AvroScheme.ofType(classOf[Stashy])
 
       Then("the scheme should be an AvroScheme")
       scheme shouldBe an[AvroScheme[_]]
-      And("the scheme should be parameterized with the type Tweet")
-      scheme.tpe.shouldEqual(manifest[Tweet])
+      And("the scheme should be parameterized with the type Stashy")
+      scheme.tpe.shouldEqual(manifest[Stashy])
     }
 
   }
