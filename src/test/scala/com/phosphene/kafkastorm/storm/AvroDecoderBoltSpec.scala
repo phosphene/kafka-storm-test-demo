@@ -2,7 +2,7 @@ package com.phosphene.kafkastorm.storm
 
 import backtype.storm.topology.{BasicOutputCollector, OutputFieldsDeclarer}
 import backtype.storm.tuple.{Fields, Tuple, Values}
-import com.phosphene.avro.Tweet
+import com.phosphene.avro.Stashy
 import com.twitter.bijection.Injection
 import com.twitter.bijection.avro.SpecificAvroCodecs
 import org.mockito.Matchers._
@@ -13,12 +13,12 @@ import scala.concurrent.duration._
 
 class AvroDecoderBoltSpec extends FunSpec with Matchers with GivenWhenThen with MockitoSugar {
 
-  implicit val specificAvroBinaryInjection: Injection[Tweet, Array[Byte]] = SpecificAvroCodecs.toBinary[Tweet]
+  implicit val specificAvroBinaryInjection: Injection[Stashy, Array[Byte]] = SpecificAvroCodecs.toBinary[Stashy]
 
-  private type AnyAvroSpecificRecordBase = Tweet
+  private type AnyAvroSpecificRecordBase = Stashy
 
-  private val AnyTweet = new Tweet("ANY_USER_1", "ANY_TEXT_1", 1234.seconds.toSeconds)
-  private val AnyTweetInAvroBytes = Injection[Tweet, Array[Byte]](AnyTweet)
+  private val AnyStashy = new Stashy("ANY_message_1", "ANY_version_1",1234.seconds.toSeconds, "ANYstring", "ANYstring")
+  private val AnyStashyInAvroBytes = Injection[Stashy, Array[Byte]](AnyStashy)
 
   describe("An AvroDecoderBolt") {
 
@@ -51,23 +51,23 @@ class AvroDecoderBoltSpec extends FunSpec with Matchers with GivenWhenThen with 
     }
 
     it("should deserialize binary records into pojos and send the pojos to downstream bolts") {
-      Given("a bolt of type Tweet")
-      val bolt = new AvroDecoderBolt[Tweet]
-      And("a Tweet record")
+      Given("a bolt of type Stashy")
+      val bolt = new AvroDecoderBolt[Stashy]
+      And("a Stashy record")
       val tuple = mock[Tuple]
-      mwhen(tuple.getBinaryByField(anyString)).thenReturn(AnyTweetInAvroBytes)
+      mwhen(tuple.getBinaryByField(anyString)).thenReturn(AnyStashyInAvroBytes)
 
-      When("the bolt receives the Tweet record")
+      When("the bolt receives the Stashy record")
       val collector = mock[BasicOutputCollector]
       bolt.execute(tuple, collector)
 
-      Then("the bolt should send the decoded Tweet pojo to downstream bolts")
-      verify(collector, times(1)).emit(new Values(AnyTweet))
+      Then("the bolt should send the decoded Stashy pojo to downstream bolts")
+      verify(collector, times(1)).emit(new Values(AnyStashy))
     }
 
     it("should skip over tuples that contain invalid binary records") {
-      Given("a bolt of type Tweet")
-      val bolt = new AvroDecoderBolt[Tweet]
+      Given("a bolt of type Stashy")
+      val bolt = new AvroDecoderBolt[Stashy]
       And("an invalid binary record")
       val tuple = mock[Tuple]
       val invalidBinaryRecord = Array[Byte](1, 2, 3, 4)
@@ -100,7 +100,7 @@ class AvroDecoderBoltSpec extends FunSpec with Matchers with GivenWhenThen with 
       Given("no bolt")
 
       When("I create a bolt without customizing the output field name")
-      val bolt = new AvroDecoderBolt[Tweet]
+      val bolt = new AvroDecoderBolt[Stashy]
 
       Then("the bolt should declare a single output field named 'pojo'")
       val declarer = mock[OutputFieldsDeclarer]
@@ -115,7 +115,7 @@ class AvroDecoderBoltSpec extends FunSpec with Matchers with GivenWhenThen with 
       Given("no bolt")
 
       When("I create a bolt with a custom output field name")
-      val bolt = new AvroDecoderBolt[Tweet](outputField = "myCustomFieldName")
+      val bolt = new AvroDecoderBolt[Stashy](outputField = "myCustomFieldName")
 
       Then("the bolt should declare a single output field with this custom name")
       val declarer = mock[OutputFieldsDeclarer]
@@ -130,13 +130,13 @@ class AvroDecoderBoltSpec extends FunSpec with Matchers with GivenWhenThen with 
     it("should create an AvroDecoderBolt for the correct type") {
       Given("a companion object")
 
-      When("I ask it to create a bolt for type Tweet")
-      val bolt = AvroDecoderBolt.ofType(classOf[Tweet])
+      When("I ask it to create a bolt for type Stashy")
+      val bolt = AvroDecoderBolt.ofType(classOf[Stashy])
 
       Then("the bolt should be an AvroDecoderBolt")
       bolt shouldBe an[AvroDecoderBolt[_]]
-      And("the bolt should be parameterized with the type Tweet")
-      bolt.tpe.shouldEqual(manifest[Tweet])
+      And("the bolt should be parameterized with the type Stashy")
+      bolt.tpe.shouldEqual(manifest[Stashy])
     }
 
   }
