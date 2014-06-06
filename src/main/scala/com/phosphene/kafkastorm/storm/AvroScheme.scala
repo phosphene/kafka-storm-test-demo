@@ -19,7 +19,7 @@ import scala.util.{Failure, Success}
  *
  * @example {{{
  * import backtype.storm.spout.SchemeAsMultiScheme
- * import com.phosphene.avro.Tweet
+ * import com.phosphene.avro.Stashy
  * storm.kafka.{KafkaSpout, SpoutConfig}
  *
  * val spoutConfig = new SpoutConfig(...)
