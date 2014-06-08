@@ -295,7 +295,7 @@ class KafkaStormSpec extends FeatureSpec with Matchers with BeforeAndAfterAll wi
         val waitForTopologyStartupMs = 3.seconds.toMillis
         Thread.sleep(waitForTopologyStartupMs)
 
-        And("I Avro-encode the stashys and use the Kafka producer app to sent them to Kafka")
+        And("I Avro-encode the stashys and use the Kafka producer app to send them to Kafka")
         stashys foreach {
           case stashy =>
             val bytes = Injection[Stashy, Array[Byte]](stashy)

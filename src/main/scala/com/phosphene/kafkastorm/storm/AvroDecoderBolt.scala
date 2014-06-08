@@ -27,13 +27,13 @@ import scala.util.{Try, Failure, Success}
  *
  * val builder = new TopologyBuilder
  * // ...spout is set up here...
- * val decoderBolt = new AvroDecoderBolt[Tweet]
+ * val decoderBolt = new AvroDecoderBolt[Stashy]
  * builder.setBolt(decoderBoltId, decoderBolt).shuffleGrouping(spoutId) // or whatever grouping you need
  * }}}
  *
  * @param inputField The name of the field in the input tuple to read from.  (Default: "bytes")
  * @param outputField The name of the field in the output tuple to write to.  (Default: "pojo")
- * @tparam T The type of the Avro record (e.g. a `Tweet`) based on the underlying Avro schema being used.  Must be
+ * @tparam T The type of the Avro record (e.g. a `Stashy`) based on the underlying Avro schema being used.  Must be
  *           a subclass of Avro's `SpecificRecordBase`.
  */
 class AvroDecoderBolt[T <: SpecificRecordBase : Manifest](
@@ -52,7 +52,7 @@ class AvroDecoderBolt[T <: SpecificRecordBase : Manifest](
   // Must be transient because Logger is not serializable
   @transient lazy private val log: Logger = LoggerFactory.getLogger(classOf[AvroDecoderBolt[T]])
 
-  // Must be transient because Injection is not serializable.  Must be implicit because that's who Injection works.
+  // Must be transient because Injection is not serializable.  Must be implicit because that's how Injection works.
   @transient lazy implicit private val specificAvroBinaryInjection: Injection[T, Array[Byte]] =
     SpecificAvroCodecs.toBinary[T]
 
@@ -89,7 +89,7 @@ object AvroDecoderBolt {
    *
    * @example {{{
    * // in Java
-   * AvroDecoderBolt decoderBolt = AvroDecoderBolt.ofType(Tweet.class);
+   * AvroDecoderBolt decoderBolt = AvroDecoderBolt.ofType(Stashy.class);
    * }}}
    *
    * @param cls

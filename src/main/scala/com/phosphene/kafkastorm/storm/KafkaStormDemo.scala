@@ -23,7 +23,7 @@ import storm.kafka.{KafkaSpout, SpoutConfig, ZkHosts}
  * [[https://github.com/miguno/wirbelsturm Wirbelsturm]].
  */
 class KafkaStormDemo(kafkaZkConnect: String, topic: String, numTopicPartitions: Int = 1,
-  topologyName: String = "kafka-storm-starter", runtime: Duration = 1.hour) {
+  topologyName: String = "kafka-storm-test-demo", runtime: Duration = 1.hour) {
 
   def runTopologyLocally() {
     val zkHosts = new ZkHosts(kafkaZkConnect)
