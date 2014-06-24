@@ -15,14 +15,7 @@ import scala.concurrent.duration._
 
 class StashyTypeFilterBoltSpec extends FunSpec with Matchers with GivenWhenThen with MockitoSugar {
 
-
-  implicit val specificAvroBinaryInjection: Injection[Stashy, Array[Byte]] = SpecificAvroCodecs.toBinary[Stashy]
-
-  private type AnyAvroSpecificRecordBase = Stashy
-
   private val AnyStashy = new Stashy("ANY_message_1", "ANY_version_1",1234.seconds.toSeconds, "ANYstring", "ANYstring")
-  private val AnyStashyInAvroBytes = Injection[Stashy, Array[Byte]](AnyStashy)
-  private val AnyStashyAsPojo = Injection.invert[Stashy, Array[Byte]](AnyStashyInAvroBytes)
 
   describe("A StashyTypeFilterBolt") {
 
@@ -53,7 +46,7 @@ class StashyTypeFilterBoltSpec extends FunSpec with Matchers with GivenWhenThen 
       val collector = mock[BasicOutputCollector]
       bolt.execute(tuple, collector)
 
-      Then("the bolt should send the a Stashy pojo to downstream bolts")
+      Then("the bolt should send the a Stashy to downstream bolts")
       verify(collector, times(1)).emit(new Values(AnyStashy))
     }
 
@@ -72,9 +65,6 @@ class StashyTypeFilterBoltSpec extends FunSpec with Matchers with GivenWhenThen 
       Then("the bolt should not send any data to downstream bolts")
       verifyZeroInteractions(collector)
     }
-
-
-
 
   }
 
